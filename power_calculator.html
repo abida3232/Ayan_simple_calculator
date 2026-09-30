@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b0d12">
+<title>Power Calculator</title>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --bg: #07090d;
+    --panel: #11141b;
+    --panel2: #171b24;
+    --key: #1d222d;
+    --key-hover: #262c39;
+    --text: #f5f7fb;
+    --muted: #8e97a8;
+    --accent: #62d6ff;
+    --accent2: #4aa8ff;
+    --danger: #ff647c;
+    --border: rgba(255,255,255,.07);
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    color: var(--text);
+    background:
+      radial-gradient(circle at 50% -10%, rgba(72, 157, 255, .15), transparent 35%),
+      var(--bg);
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+  .calculator {
+    width: min(420px, 100%);
+    padding: 18px;
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    background: linear-gradient(145deg, rgba(25,29,38,.98), rgba(10,12,17,.98));
+    box-shadow: 0 30px 80px rgba(0,0,0,.55), inset 0 1px rgba(255,255,255,.04);
+  }
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 5px 14px;
+  }
+  .brand {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+    color: var(--accent);
+  }
+  .status {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: .5px;
+  }
+  .display {
+    min-height: 150px;
+    padding: 22px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 21px;
+    background: linear-gradient(160deg, #0c1017, #090b10);
+  }
+  .expression {
+    width: 100%;
+    min-height: 27px;
+    text-align: right;
+    color: var(--muted);
+    font-size: clamp(16px, 4vw, 20px);
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .expression::-webkit-scrollbar { display: none; }
+  .result {
+    width: 100%;
+    margin-top: 6px;
+    text-align: right;
+    font-size: clamp(34px, 9vw, 48px);
+    font-weight: 700;
+    letter-spacing: -1px;
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .result::-webkit-scrollbar { display: none; }
+  .keys {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 14px;
+  }
+  button {
+    min-height: 64px;
+    border: 1px solid var(--border);
+    border-radius: 17px;
+    color: var(--text);
+    background: var(--key);
+    font: inherit;
+    font-size: 21px;
+    font-weight: 650;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .08s ease, background .12s ease, box-shadow .12s ease;
+  }
+  button:hover { background: var(--key-hover); }
+  button:active { transform: scale(.95); }
+  .operator {
+    color: var(--accent);
+    background: #17232d;
+  }
+  .operator:hover { background: #1c2c38; }
+  .utility {
+    color: #cbd2df;
+    background: #252a35;
+  }
+  .clear { color: var(--danger); }
+  .equals {
+    color: #061018;
+    background: linear-gradient(145deg, var(--accent), var(--accent2));
+    box-shadow: 0 8px 24px rgba(65, 177, 255, .18);
+  }
+  .equals:hover {
+    background: linear-gradient(145deg, #79ddff, #5db5ff);
+  }
+  .zero { grid-column: span 2; }
+  .hint {
+    margin: 13px 4px 1px;
+    color: #667082;
+    text-align: center;
+    font-size: 11px;
+  }
+  @media (max-width: 380px) {
+    .calculator { padding: 13px; border-radius: 23px; }
+    .keys { gap: 8px; }
+    button { min-height: 58px; border-radius: 15px; }
+    .display { min-height: 135px; }
+  }
+</style>
+</head>
+<body>
+
+<main class="calculator" aria-label="Power Calculator">
+  <div class="topbar">
+    <div class="brand">POWER CALCULATOR</div>
+    <div class="status">READY</div>
+  </div>
+
+  <section class="display" aria-live="polite">
+    <div id="expression" class="expression"></div>
+    <div id="result" class="result">0</div>
+  </section>
+
+  <section class="keys">
+    <button class="utility clear" data-action="clear">AC</button>
+    <button class="utility" data-action="backspace" aria-label="Backspace">⌫</button>
+    <button class="utility" data-value="(">(</button>
+    <button class="utility" data-value=")">)</button>
+
+    <button data-value="7">7</button>
+    <button data-value="8">8</button>
+    <button data-value="9">9</button>
+    <button class="operator" data-value="÷">÷</button>
+
+    <button data-value="4">4</button>
+    <button data-value="5">5</button>
+    <button data-value="6">6</button>
+    <button class="operator" data-value="×">×</button>
+
+    <button data-value="1">1</button>
+    <button data-value="2">2</button>
+    <button data-value="3">3</button>
+    <button class="operator" data-value="−">−</button>
+
+    <button class="operator" data-value="%">%</button>
+    <button data-value="0">0</button>
+    <button data-value=".">.</button>
+    <button class="operator" data-value="+">+</button>
+
+    <button class="utility" data-action="sign">+/−</button>
+    <button class="equals zero" data-action="equals">=</button>
+  </section>
+
+  <div class="hint">Keyboard supported • Esc = clear • Enter = calculate</div>
+</main>
+
+<script>
+(() => {
+  const expressionEl = document.getElementById("expression");
+  const resultEl = document.getElementById("result");
+
+  let expression = "";
+  let justCalculated = false;
+
+  const isOperator = ch => ["+", "−", "×", "÷"].includes(ch);
+  const isDigit = ch => /[0-9]/.test(ch);
+
+  function render() {
+    expressionEl.textContent = expression;
+    resultEl.textContent = expression ? preview(expression) : "0";
+    requestAnimationFrame(() => {
+      expressionEl.scrollLeft = expressionEl.scrollWidth;
+      resultEl.scrollLeft = resultEl.scrollWidth;
+    });
+  }
+
+  function normalize(expr) {
+    return expr
+      .replace(/×/g, "*")
+      .replace(/÷/g, "/")
+      .replace(/−/g, "-")
+      .replace(/%/g, "/100");
+  }
+
+  // Small, safe arithmetic parser: no eval() and no Function().
+  function calculate(expr) {
+    let s = normalize(expr).replace(/\s+/g, "");
+    if (!s) return 0;
+
+    // Convert percentage after a number or closing bracket.
+    // normalize() has already changed % into /100.
+    if (!/^[0-9+*/().-]+$/.test(s)) throw new Error("Invalid");
+
+    const tokens = tokenize(s);
+    let pos = 0;
+
+    function parseExpression() {
+      let value = parseTerm();
+      while (pos < tokens.length && (tokens[pos] === "+" || tokens[pos] === "-")) {
+        const op = tokens[pos++];
+        const right = parseTerm();
+        value = op === "+" ? value + right : value - right;
+      }
+      return value;
+    }
+
+    function parseTerm() {
+      let value = parseUnary();
+      while (pos < tokens.length && (tokens[pos] === "*" || tokens[pos] === "/")) {
+        const op = tokens[pos++];
+        const right = parseUnary();
+        if (op === "/" && right === 0) throw new Error("Divide by zero");
+        value = op === "*" ? value * right : value / right;
+      }
+      return value;
+    }
+
+    function parseUnary() {
+      if (tokens[pos] === "+") { pos++; return parseUnary(); }
+      if (tokens[pos] === "-") { pos++; return -parseUnary(); }
+      return parsePrimary();
+    }
+
+    function parsePrimary() {
+      if (tokens[pos] === "(") {
+        pos++;
+        const value = parseExpression();
+        if (tokens[pos] !== ")") throw new Error("Missing bracket");
+        pos++;
+        return value;
+      }
+      const token = tokens[pos++];
+      if (token === undefined || !/^\d*\.?\d+$/.test(token)) throw new Error("Invalid");
+      return Number(token);
+    }
+
+    const value = parseExpression();
+    if (pos !== tokens.length || !Number.isFinite(value)) throw new Error("Invalid");
+    return value;
+  }
+
+  function tokenize(s) {
+    const tokens = [];
+    let i = 0;
+    while (i < s.length) {
+      const c = s[i];
+      if ("+-*/()".includes(c)) {
+        tokens.push(c);
+        i++;
+      } else if (/[0-9.]/.test(c)) {
+        let start = i, dots = 0;
+        while (i < s.length && /[0-9.]/.test(s[i])) {
+          if (s[i] === ".") dots++;
+          i++;
+        }
+        const n = s.slice(start, i);
+        if (dots > 1 || n === ".") throw new Error("Invalid number");
+        tokens.push(n);
+      } else {
+        throw new Error("Invalid");
+      }
+    }
+    return tokens;
+  }
+
+  function formatNumber(n) {
+    if (!Number.isFinite(n)) return "Error";
+    if (Object.is(n, -0)) n = 0;
+    const rounded = Math.abs(n) < 1e-12 ? 0 : n;
+    return Number(rounded.toPrecision(12)).toLocaleString("en-US", {
+      maximumFractionDigits: 10,
+      useGrouping: true
+    });
+  }
+
+  function preview(expr) {
+    try {
+      if (/[+\-×÷.]$/.test(expr) || expr.endsWith("(")) return "…";
+      return formatNumber(calculate(expr));
+    } catch {
+      return "…";
+    }
+  }
+
+  function clear() {
+    expression = "";
+    justCalculated = false;
+    render();
+  }
+
+  function backspace() {
+    if (justCalculated) { clear(); return; }
+    expression = expression.slice(0, -1);
+    render();
+  }
+
+  function addValue(value) {
+    if (justCalculated && (isDigit(value) || value === "." || value === "(")) {
+      expression = "";
+      justCalculated = false;
+    } else if (justCalculated) {
+      justCalculated = false;
+    }
+
+    const last = expression.slice(-1);
+
+    if (isDigit(value)) {
+      // Implicit multiplication after a closing bracket.
+      if (last === ")") expression += "×";
+      expression += value;
+    } else if (value === ".") {
+      if (last === ")" || last === "%") return;
+      const part = expression.split(/[+−×÷()]/).pop();
+      if (part.includes(".")) return;
+      expression += (part === "" ? "0." : ".");
+    } else if (value === "(") {
+      if (isDigit(last) || last === ")" || last === "%") expression += "×";
+      expression += "(";
+    } else if (value === ")") {
+      const opens = (expression.match(/\(/g) || []).length;
+      const closes = (expression.match(/\)/g) || []).length;
+      if (opens <= closes || !last || isOperator(last) || last === "(") return;
+      expression += ")";
+    } else if (value === "%") {
+      if (isDigit(last) || last === ")" ) expression += "%";
+    } else if (isOperator(value)) {
+      if (!expression) {
+        if (value === "−") expression = "−";
+        return;
+      }
+      if (isOperator(last)) expression = expression.slice(0, -1) + value;
+      else if (last !== "(" && last !== ".") expression += value;
+    }
+    render();
+  }
+
+  function toggleSign() {
+    if (!expression) {
+      expression = "−";
+    } else {
+      try {
+        const value = calculate(expression);
+        expression = value === 0 ? "−" : "−(" + expression + ")";
+      } catch {
+        if (expression.startsWith("−(") && expression.endsWith(")")) {
+          expression = expression.slice(2, -1);
+        } else {
+          expression = "−(" + expression + ")";
+        }
+      }
+    }
+    justCalculated = false;
+    render();
+  }
+
+  function equals() {
+    if (!expression) return;
+    try {
+      const value = calculate(expression);
+      expressionEl.textContent = expression + " =";
+      resultEl.textContent = formatNumber(value);
+      expression = String(value);
+      justCalculated = true;
+      requestAnimationFrame(() => {
+        expressionEl.scrollLeft = expressionEl.scrollWidth;
+        resultEl.scrollLeft = resultEl.scrollWidth;
+      });
+    } catch {
+      resultEl.textContent = "Error";
+      justCalculated = true;
+    }
+  }
+
+  document.querySelectorAll("button").forEach(button => {
+    button.addEventListener("click", () => {
+      const action = button.dataset.action;
+      const value = button.dataset.value;
+      if (action === "clear") clear();
+      else if (action === "backspace") backspace();
+      else if (action === "sign") toggleSign();
+      else if (action === "equals") equals();
+      else if (value) addValue(value);
+    });
+  });
+
+  document.addEventListener("keydown", e => {
+    const keyMap = {
+      "*": "×", "/": "÷", "-": "−", "+": "+",
+      "(": "(", ")": ")", ".": ".", "%": "%"
+    };
+
+    if (/^\d$/.test(e.key)) addValue(e.key);
+    else if (keyMap[e.key]) addValue(keyMap[e.key]);
+    else if (e.key === "Enter" || e.key === "=") { e.preventDefault(); equals(); }
+    else if (e.key === "Backspace") backspace();
+    else if (e.key === "Escape" || e.key.toLowerCase() === "c") clear();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
